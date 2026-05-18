@@ -28,17 +28,19 @@
         .participants-lbl { font-size: 12px; color: #aaa; margin-bottom: 12px; }
         .status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #fff3e0; color: #e65100; margin-bottom: 14px; }
         .status.live { background: #e3f2fd; color: #1565c0; }
+        .status.connected { background: #e8f5e9; color: #2e7d32; }
         .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: blink 1.5s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .btn-row { display: flex; gap: 8px; }
-        .btn { flex: 1; padding: 8px; font-size: 12px; font-weight: 500; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+        .btn { flex: 1; padding: 8px; font-size: 12px; font-weight: 500; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
         .btn:hover { background: #f5f5f5; }
-        .btn-demo { color: #378ADD; border-color: #378ADD; }
         .btn-reset { color: #E24B4A; border-color: #E24B4A; }
+        .firebase-badge { font-size: 10px; color: #aaa; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; }
         @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .right { position: static; } }
     </style>
 </head>
 <body>
+
 <div class="container">
     <div class="left">
         <div class="question-block">
@@ -54,6 +56,7 @@
                 <div class="result-count" id="q1-no-count">0</div>
             </div>
         </div>
+
         <div class="question-block">
             <div class="q-title">¿Cuentas con el fondo de pantalla institucional en tu equipo de cómputo?</div>
             <div class="result-item">
@@ -68,77 +71,85 @@
             </div>
         </div>
     </div>
+
     <div class="right">
         <div class="qr-box">
             <div class="qr-label">Escanea para participar</div>
             <div id="qrcode"></div>
-            <div class="qr-url" id="qr-url-text"></div>
+            <div class="qr-url">danielamaravillas-netizen.github.io/EncuestaSLE/votar.html</div>
             <div class="participants-num" id="total">0</div>
             <div class="participants-lbl">participantes</div>
-            <div class="status" id="status-badge"><span class="dot"></span> Esperando respuestas</div>
+            <div class="status" id="status-badge"><span class="dot"></span> Conectando...</div>
             <div class="btn-row">
-                <button class="btn btn-demo" onclick="demoData()">Demo</button>
-                <button class="btn btn-reset" onclick="resetData()">Reiniciar</button>
+                <button class="btn btn-reset" onclick="resetData()">↺ Reiniciar votos</button>
             </div>
+            <div class="firebase-badge">🔴 En vivo · Firebase</div>
         </div>
     </div>
 </div>
-<script>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+    const firebaseConfig = {
+        databaseURL: 'https://encuestasle-default-rtdb.firebaseio.com'
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const votosRef = ref(db, 'votos');
+
+    // Generar QR
     const SURVEY_URL = 'https://danielamaravillas-netizen.github.io/EncuestaSLE/votar.html';
-    let votes = { q1: { si: 0, no: 0 }, q2: { si: 0, no: 0 } };
+    new QRCode(document.getElementById('qrcode'), {
+        text: SURVEY_URL,
+        width: 200, height: 200,
+        colorDark: '#000000', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+    });
 
-    function init() {
-        document.getElementById('qr-url-text').textContent = SURVEY_URL;
-        new QRCode(document.getElementById('qrcode'), {
-            text: SURVEY_URL, width: 200, height: 200,
-            colorDark: '#000000', colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H
-        });
-        loadFromStorage();
-        setInterval(loadFromStorage, 3000);
-    }
+    // Escuchar cambios en tiempo real
+    onValue(votosRef, (snapshot) => {
+        const data = snapshot.val() || { q1: { si: 0, no: 0 }, q2: { si: 0, no: 0 } };
+        renderAll(data);
 
-    function loadFromStorage() {
-        const saved = localStorage.getItem('sle_votos');
-        if (saved) { votes = JSON.parse(saved); renderAll(); }
-    }
-
-    function renderAll() {
-        renderQ('q1'); renderQ('q2');
-        const total = votes.q1.si + votes.q1.no;
-        document.getElementById('total').textContent = total;
+        const badge = document.getElementById('status-badge');
+        const total = (data.q1?.si || 0) + (data.q1?.no || 0);
         if (total > 0) {
-            const b = document.getElementById('status-badge');
-            b.className = 'status live';
-            b.innerHTML = '<span class="dot"></span> ' + total + ' respuesta' + (total !== 1 ? 's' : '');
+            badge.className = 'status live';
+            badge.innerHTML = '<span class="dot"></span> ' + total + ' respuesta' + (total !== 1 ? 's' : '');
+        } else {
+            badge.className = 'status connected';
+            badge.innerHTML = '<span class="dot"></span> En vivo · esperando';
         }
+    });
+
+    function renderAll(data) {
+        renderQ('q1', data.q1 || { si: 0, no: 0 });
+        renderQ('q2', data.q2 || { si: 0, no: 0 });
+        const total = (data.q1?.si || 0) + (data.q1?.no || 0);
+        document.getElementById('total').textContent = total;
     }
 
-    function renderQ(q) {
-        const total = votes[q].si + votes[q].no;
-        const siPct = total === 0 ? 0 : Math.round(votes[q].si / total * 100);
-        const noPct = total === 0 ? 0 : Math.round(votes[q].no / total * 100);
-        document.getElementById(q+'-si-fill').style.width = siPct+'%';
-        document.getElementById(q+'-no-fill').style.width = noPct+'%';
-        document.getElementById(q+'-si-pct').textContent = siPct+'%';
-        document.getElementById(q+'-no-pct').textContent = noPct+'%';
-        document.getElementById(q+'-si-count').textContent = votes[q].si;
-        document.getElementById(q+'-no-count').textContent = votes[q].no;
+    function renderQ(q, d) {
+        const total = (d.si || 0) + (d.no || 0);
+        const siPct = total === 0 ? 0 : Math.round(d.si / total * 100);
+        const noPct = total === 0 ? 0 : Math.round(d.no / total * 100);
+        document.getElementById(q+'-si-fill').style.width = siPct + '%';
+        document.getElementById(q+'-no-fill').style.width = noPct + '%';
+        document.getElementById(q+'-si-pct').textContent = siPct + '%';
+        document.getElementById(q+'-no-pct').textContent = noPct + '%';
+        document.getElementById(q+'-si-count').textContent = d.si || 0;
+        document.getElementById(q+'-no-count').textContent = d.no || 0;
     }
 
-    function demoData() {
-        votes = { q1: { si: 42, no: 18 }, q2: { si: 35, no: 25 } };
-        localStorage.setItem('sle_votos', JSON.stringify(votes));
-        renderAll();
-    }
-
-    function resetData() {
-        votes = { q1: { si: 0, no: 0 }, q2: { si: 0, no: 0 } };
-        localStorage.removeItem('sle_votos');
-        renderAll();
-    }
-
-    window.onload = init;
+    window.resetData = function() {
+        if (confirm('¿Segura que quieres reiniciar todos los votos?')) {
+            set(votosRef, { q1: { si: 0, no: 0 }, q2: { si: 0, no: 0 } });
+        }
+    };
 </script>
+
 </body>
 </html>

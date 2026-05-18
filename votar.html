@@ -8,17 +8,17 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .card { background: white; border-radius: 20px; padding: 36px 28px; max-width: 420px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
-        .logo { text-align: center; margin-bottom: 28px; }
+        .logo { text-align: center; margin-bottom: 24px; }
         .logo-text { font-size: 22px; font-weight: 700; color: #378ADD; letter-spacing: 2px; }
         .logo-sub { font-size: 12px; color: #aaa; margin-top: 2px; }
-        .divider { height: 1px; background: #f0f0f0; margin-bottom: 28px; }
-        .progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 28px; }
+        .divider { height: 1px; background: #f0f0f0; margin-bottom: 24px; }
+        .progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
         .step-dot { width: 10px; height: 10px; border-radius: 50%; background: #e0e0e0; transition: background 0.3s; }
         .step-dot.active { background: #378ADD; }
         .step-dot.done { background: #378ADD; }
         .q-number { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #378ADD; margin-bottom: 8px; }
         .q-text { font-size: 18px; font-weight: 600; color: #1a1a1a; line-height: 1.4; margin-bottom: 24px; }
-        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
         .opt-btn { padding: 18px 12px; border-radius: 12px; border: 2px solid #e0e0e0; background: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #333; }
         .opt-btn:hover { border-color: #378ADD; color: #378ADD; background: #f0f7ff; }
         .opt-btn.sel-si { border-color: #378ADD; background: #378ADD; color: white; }
@@ -31,6 +31,7 @@
         .success-title { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
         .success-sub { font-size: 14px; color: #888; line-height: 1.5; }
         .footer { text-align: center; margin-top: 24px; font-size: 11px; color: #ccc; }
+        .loading { text-align: center; padding: 20px; color: #aaa; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -41,57 +42,73 @@
     </div>
     <div class="divider"></div>
 
-    <div class="progress">
-        <div class="step-dot active" id="dot1"></div>
-        <div class="step-dot" id="dot2"></div>
-    </div>
+    <div id="loading" class="loading">Conectando...</div>
 
-    <div id="form-section">
-        <!-- Pregunta 1 -->
-        <div id="q1-block">
-            <div class="q-number">Pregunta 1 de 2</div>
-            <div class="q-text">¿Conoces la misión de la compañía?</div>
-            <div class="options">
-                <button class="opt-btn" id="q1-si" onclick="elegir(1,'si')">✅ Sí</button>
-                <button class="opt-btn" id="q1-no" onclick="elegir(1,'no')">❌ No</button>
-            </div>
+    <div id="app" style="display:none;">
+        <div class="progress">
+            <div class="step-dot active" id="dot1"></div>
+            <div class="step-dot" id="dot2"></div>
         </div>
 
-        <!-- Pregunta 2 -->
-        <div id="q2-block" style="display:none;">
-            <div class="q-number">Pregunta 2 de 2</div>
-            <div class="q-text">¿Cuentas con el fondo de pantalla institucional en tu equipo de cómputo?</div>
-            <div class="options">
-                <button class="opt-btn" id="q2-si" onclick="elegir(2,'si')">✅ Sí</button>
-                <button class="opt-btn" id="q2-no" onclick="elegir(2,'no')">❌ No</button>
+        <div id="form-section">
+            <div id="q1-block">
+                <div class="q-number">Pregunta 1 de 2</div>
+                <div class="q-text">¿Conoces la misión de la compañía?</div>
+                <div class="options">
+                    <button class="opt-btn" id="q1-si" onclick="elegir(1,'si')">✅ Sí</button>
+                    <button class="opt-btn" id="q1-no" onclick="elegir(1,'no')">❌ No</button>
+                </div>
             </div>
+
+            <div id="q2-block" style="display:none;">
+                <div class="q-number">Pregunta 2 de 2</div>
+                <div class="q-text">¿Cuentas con el fondo de pantalla institucional en tu equipo de cómputo?</div>
+                <div class="options">
+                    <button class="opt-btn" id="q2-si" onclick="elegir(2,'si')">✅ Sí</button>
+                    <button class="opt-btn" id="q2-no" onclick="elegir(2,'no')">❌ No</button>
+                </div>
+            </div>
+
+            <button class="next-btn" id="next-btn" onclick="avanzar()" disabled>Siguiente →</button>
         </div>
 
-        <button class="next-btn" id="next-btn" onclick="avanzar()" disabled>Siguiente →</button>
-    </div>
-
-    <div class="success" id="success-section">
-        <div class="success-icon">🎉</div>
-        <div class="success-title">¡Gracias por participar!</div>
-        <div class="success-sub">Tu respuesta quedó registrada.<br>Puedes ver los resultados en la pantalla principal.</div>
+        <div class="success" id="success-section">
+            <div class="success-icon">🎉</div>
+            <div class="success-title">¡Gracias por participar!</div>
+            <div class="success-sub">Tu respuesta quedó registrada.<br>Puedes ver los resultados en la pantalla principal.</div>
+        </div>
     </div>
 
     <div class="footer">Encuesta anónima · SLE 2026</div>
 </div>
 
-<script>
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getDatabase, ref, get, set, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+    const firebaseConfig = {
+        databaseURL: 'https://encuestasle-default-rtdb.firebaseio.com'
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Mostrar app cuando Firebase esté listo
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
     const resp = { q1: null, q2: null };
     let pregunta = 1;
 
-    function elegir(q, val) {
+    window.elegir = function(q, val) {
         resp['q' + q] = val;
         document.getElementById('q' + q + '-si').className = 'opt-btn';
         document.getElementById('q' + q + '-no').className = 'opt-btn';
         document.getElementById('q' + q + '-' + val).className = 'opt-btn sel-' + val;
         document.getElementById('next-btn').disabled = false;
-    }
+    };
 
-    function avanzar() {
+    window.avanzar = function() {
         if (pregunta === 1) {
             document.getElementById('q1-block').style.display = 'none';
             document.getElementById('q2-block').style.display = 'block';
@@ -103,15 +120,29 @@
         } else {
             enviar();
         }
-    }
+    };
 
-    function enviar() {
-        const base = JSON.parse(localStorage.getItem('sle_votos') || '{"q1":{"si":0,"no":0},"q2":{"si":0,"no":0}}');
-        base.q1[resp.q1]++;
-        base.q2[resp.q2]++;
-        localStorage.setItem('sle_votos', JSON.stringify(base));
-        document.getElementById('form-section').style.display = 'none';
-        document.getElementById('success-section').style.display = 'block';
+    async function enviar() {
+        document.getElementById('next-btn').disabled = true;
+        document.getElementById('next-btn').textContent = 'Enviando...';
+
+        try {
+            // Sumar voto q1
+            const q1Ref = ref(db, 'votos/q1/' + resp.q1);
+            await runTransaction(q1Ref, (current) => (current || 0) + 1);
+
+            // Sumar voto q2
+            const q2Ref = ref(db, 'votos/q2/' + resp.q2);
+            await runTransaction(q2Ref, (current) => (current || 0) + 1);
+
+            // Mostrar éxito
+            document.getElementById('form-section').style.display = 'none';
+            document.getElementById('success-section').style.display = 'block';
+        } catch (e) {
+            document.getElementById('next-btn').disabled = false;
+            document.getElementById('next-btn').textContent = 'Reintentar';
+            alert('Error al enviar. Verifica tu conexión.');
+        }
     }
 </script>
 </body>
