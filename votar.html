@@ -31,7 +31,6 @@
         .success-title { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
         .success-sub { font-size: 14px; color: #888; line-height: 1.5; }
         .footer { text-align: center; margin-top: 24px; font-size: 11px; color: #ccc; }
-        .loading { text-align: center; padding: 20px; color: #aaa; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -42,41 +41,35 @@
     </div>
     <div class="divider"></div>
 
-    <div id="loading" class="loading">Conectando...</div>
+    <div class="progress">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+    </div>
 
-    <div id="app" style="display:none;">
-        <div class="progress">
-            <div class="step-dot active" id="dot1"></div>
-            <div class="step-dot" id="dot2"></div>
-        </div>
-
-        <div id="form-section">
-            <div id="q1-block">
-                <div class="q-number">Pregunta 1 de 2</div>
-                <div class="q-text">¿Conoces la misión de la compañía?</div>
-                <div class="options">
-                    <button class="opt-btn" id="q1-si" onclick="elegir(1,'si')">✅ Sí</button>
-                    <button class="opt-btn" id="q1-no" onclick="elegir(1,'no')">❌ No</button>
-                </div>
+    <div id="form-section">
+        <div id="q1-block">
+            <div class="q-number">Pregunta 1 de 2</div>
+            <div class="q-text">¿Conoces la misión de la compañía?</div>
+            <div class="options">
+                <button class="opt-btn" id="q1-si" onclick="elegir(1,'si')">✅ Sí</button>
+                <button class="opt-btn" id="q1-no" onclick="elegir(1,'no')">❌ No</button>
             </div>
-
-            <div id="q2-block" style="display:none;">
-                <div class="q-number">Pregunta 2 de 2</div>
-                <div class="q-text">¿Cuentas con el fondo de pantalla institucional en tu equipo de cómputo?</div>
-                <div class="options">
-                    <button class="opt-btn" id="q2-si" onclick="elegir(2,'si')">✅ Sí</button>
-                    <button class="opt-btn" id="q2-no" onclick="elegir(2,'no')">❌ No</button>
-                </div>
+        </div>
+        <div id="q2-block" style="display:none;">
+            <div class="q-number">Pregunta 2 de 2</div>
+            <div class="q-text">¿Cuentas con el fondo de pantalla institucional en tu equipo de cómputo?</div>
+            <div class="options">
+                <button class="opt-btn" id="q2-si" onclick="elegir(2,'si')">✅ Sí</button>
+                <button class="opt-btn" id="q2-no" onclick="elegir(2,'no')">❌ No</button>
             </div>
-
-            <button class="next-btn" id="next-btn" onclick="avanzar()" disabled>Siguiente →</button>
         </div>
+        <button class="next-btn" id="next-btn" onclick="avanzar()" disabled>Siguiente →</button>
+    </div>
 
-        <div class="success" id="success-section">
-            <div class="success-icon">🎉</div>
-            <div class="success-title">¡Gracias por participar!</div>
-            <div class="success-sub">Tu respuesta quedó registrada.<br>Puedes ver los resultados en la pantalla principal.</div>
-        </div>
+    <div class="success" id="success-section">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">¡Gracias por participar!</div>
+        <div class="success-sub">Tu respuesta quedó registrada.<br>Puedes ver los resultados en la pantalla principal.</div>
     </div>
 
     <div class="footer">Encuesta anónima · SLE 2026</div>
@@ -84,18 +77,20 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getDatabase, ref, get, set, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+    import { getDatabase, ref, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
     const firebaseConfig = {
-        databaseURL: 'https://encuestasle-default-rtdb.firebaseio.com'
+        apiKey: "AIzaSyAjGYsPAZqojQhfuE9WruTVMSeOnI8WMAQ",
+        authDomain: "encuestasle.firebaseapp.com",
+        databaseURL: "https://encuestasle-default-rtdb.firebaseio.com",
+        projectId: "encuestasle",
+        storageBucket: "encuestasle.firebasestorage.app",
+        messagingSenderId: "276179568423",
+        appId: "1:276179568423:web:698934055d0306aaddcb02"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
-    // Mostrar app cuando Firebase esté listo
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
 
     const resp = { q1: null, q2: null };
     let pregunta = 1;
@@ -125,20 +120,12 @@
     async function enviar() {
         document.getElementById('next-btn').disabled = true;
         document.getElementById('next-btn').textContent = 'Enviando...';
-
         try {
-            // Sumar voto q1
-            const q1Ref = ref(db, 'votos/q1/' + resp.q1);
-            await runTransaction(q1Ref, (current) => (current || 0) + 1);
-
-            // Sumar voto q2
-            const q2Ref = ref(db, 'votos/q2/' + resp.q2);
-            await runTransaction(q2Ref, (current) => (current || 0) + 1);
-
-            // Mostrar éxito
+            await runTransaction(ref(db, 'votos/q1/' + resp.q1), (v) => (v || 0) + 1);
+            await runTransaction(ref(db, 'votos/q2/' + resp.q2), (v) => (v || 0) + 1);
             document.getElementById('form-section').style.display = 'none';
             document.getElementById('success-section').style.display = 'block';
-        } catch (e) {
+        } catch(e) {
             document.getElementById('next-btn').disabled = false;
             document.getElementById('next-btn').textContent = 'Reintentar';
             alert('Error al enviar. Verifica tu conexión.');

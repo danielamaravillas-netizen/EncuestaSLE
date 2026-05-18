@@ -32,7 +32,7 @@
         .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: blink 1.5s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
         .btn-row { display: flex; gap: 8px; }
-        .btn { flex: 1; padding: 8px; font-size: 12px; font-weight: 500; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+        .btn { flex: 1; padding: 8px; font-size: 12px; font-weight: 500; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
         .btn:hover { background: #f5f5f5; }
         .btn-reset { color: #E24B4A; border-color: #E24B4A; }
         .firebase-badge { font-size: 10px; color: #aaa; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; }
@@ -40,7 +40,6 @@
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="left">
         <div class="question-block">
@@ -56,7 +55,6 @@
                 <div class="result-count" id="q1-no-count">0</div>
             </div>
         </div>
-
         <div class="question-block">
             <div class="q-title">¿Cuentas con el fondo de pantalla institucional en tu equipo de cómputo?</div>
             <div class="result-item">
@@ -71,7 +69,6 @@
             </div>
         </div>
     </div>
-
     <div class="right">
         <div class="qr-box">
             <div class="qr-label">Escanea para participar</div>
@@ -90,32 +87,34 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+    import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
     const firebaseConfig = {
-        databaseURL: 'https://encuestasle-default-rtdb.firebaseio.com'
+        apiKey: "AIzaSyAjGYsPAZqojQhfuE9WruTVMSeOnI8WMAQ",
+        authDomain: "encuestasle.firebaseapp.com",
+        databaseURL: "https://encuestasle-default-rtdb.firebaseio.com",
+        projectId: "encuestasle",
+        storageBucket: "encuestasle.firebasestorage.app",
+        messagingSenderId: "276179568423",
+        appId: "1:276179568423:web:698934055d0306aaddcb02"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const votosRef = ref(db, 'votos');
 
-    // Generar QR
     const SURVEY_URL = 'https://danielamaravillas-netizen.github.io/EncuestaSLE/votar.html';
     new QRCode(document.getElementById('qrcode'), {
-        text: SURVEY_URL,
-        width: 200, height: 200,
+        text: SURVEY_URL, width: 200, height: 200,
         colorDark: '#000000', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.H
     });
 
-    // Escuchar cambios en tiempo real
     onValue(votosRef, (snapshot) => {
         const data = snapshot.val() || { q1: { si: 0, no: 0 }, q2: { si: 0, no: 0 } };
         renderAll(data);
-
-        const badge = document.getElementById('status-badge');
         const total = (data.q1?.si || 0) + (data.q1?.no || 0);
+        const badge = document.getElementById('status-badge');
         if (total > 0) {
             badge.className = 'status live';
             badge.innerHTML = '<span class="dot"></span> ' + total + ' respuesta' + (total !== 1 ? 's' : '');
@@ -136,10 +135,10 @@
         const total = (d.si || 0) + (d.no || 0);
         const siPct = total === 0 ? 0 : Math.round(d.si / total * 100);
         const noPct = total === 0 ? 0 : Math.round(d.no / total * 100);
-        document.getElementById(q+'-si-fill').style.width = siPct + '%';
-        document.getElementById(q+'-no-fill').style.width = noPct + '%';
-        document.getElementById(q+'-si-pct').textContent = siPct + '%';
-        document.getElementById(q+'-no-pct').textContent = noPct + '%';
+        document.getElementById(q+'-si-fill').style.width = siPct+'%';
+        document.getElementById(q+'-no-fill').style.width = noPct+'%';
+        document.getElementById(q+'-si-pct').textContent = siPct+'%';
+        document.getElementById(q+'-no-pct').textContent = noPct+'%';
         document.getElementById(q+'-si-count').textContent = d.si || 0;
         document.getElementById(q+'-no-count').textContent = d.no || 0;
     }
@@ -150,6 +149,5 @@
         }
     };
 </script>
-
 </body>
 </html>
